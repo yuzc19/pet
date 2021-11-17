@@ -158,7 +158,7 @@ class TransformerModelWrapper:
 
         self.preprocessor = PREPROCESSORS[self.config.wrapper_type](self, self.config.task_name, self.config.pattern_id,
                                                                     self.config.verbalizer_file)
-        self.task_helper = TASK_HELPERS[self.config.task_name](self) if self.config.task_name in TASK_HELPERS else None
+        self.Ttask_helper = TASK_HELPERS[self.config.task_name](self) if self.config.task_name in TASK_HELPERS else None
 
     @classmethod
     def from_pretrained(cls, path: str) -> 'TransformerModelWrapper':

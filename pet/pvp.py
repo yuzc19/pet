@@ -818,6 +818,36 @@ class Sst2PVP(PVP):
         return Sst2PVP.VERBALIZER[label]
 
 
+class SnliPVP(PVP):
+    VERBALIZER = {
+        "contradiction": ["No"],
+        "entailment": ["Yes"],
+        "neutral": ["Maybe"],
+    }
+
+    def get_parts(self, example: InputExample) -> FilledPattern:
+        text_a = self.shortenable(self.remove_final_punc(example.text_a))
+        text_b = self.shortenable(example.text_b)
+
+        return [text_a, "?"], [self.mask, ",", text_b]
+
+    def verbalize(self, label) -> List[str]:
+        return SnliPVP.VERBALIZER[label]
+
+
+class QqpPVP(PVP):
+    VERBALIZER = {"0": ["No"], "1": ["Yes"]}
+
+    def get_parts(self, example: InputExample) -> FilledPattern:
+        text_a = self.shortenable(example.text_a)
+        text_b = self.shortenable(example.text_b)
+
+        return [text_a], [self.mask, ",", text_b]
+
+    def verbalize(self, label) -> List[str]:
+        return QqpPVP.VERBALIZER[label]
+
+
 PVPS = {
     "agnews": AgnewsPVP,
     "mnli": MnliPVP,
@@ -838,4 +868,6 @@ PVPS = {
     "ax-b": RtePVP,
     "ax-g": RtePVP,
     "sst-2": Sst2PVP,
+    "snli": SnliPVP,
+    "qqp": QqpPVP,
 }

@@ -409,7 +409,8 @@ class RteProcessor(DataProcessor):
         """See base class."""
         return ["entailment", "not_entailment"]
 
-    def _create_examples(self, lines, set_type):
+    @staticmethod
+    def _create_examples(lines, set_type) -> List[InputExample]:
         """Creates examples for the training, dev and test sets."""
         examples = []
         for (i, line) in enumerate(lines):
@@ -420,7 +421,9 @@ class RteProcessor(DataProcessor):
             text_b = line[2]
             label = line[-1]
             examples.append(
-                InputExample(guid=guid, text_a=text_a, text_b=text_b, label=label)
+                InputExample(
+                    guid=guid, text_a=text_a, text_b=text_b, label=label, idx=i
+                )
             )
         return examples
 
@@ -869,7 +872,131 @@ class Sst2Processor(DataProcessor):
             text_a = line[text_index]
             label = line[1]
             examples.append(
-                InputExample(guid=guid, text_a=text_a, text_b=None, label=label)
+                InputExample(guid=guid, text_a=text_a, text_b=None, label=label, idx=i)
+            )
+        return examples
+
+
+class SnliProcessor(DataProcessor):
+    """Processor for the MultiNLI data set (GLUE version)."""
+
+    def get_example_from_tensor_dict(self, tensor_dict):
+        """See base class."""
+        return InputExample(
+            tensor_dict["idx"].numpy(),
+            tensor_dict["premise"].numpy().decode("utf-8"),
+            tensor_dict["hypothesis"].numpy().decode("utf-8"),
+            str(tensor_dict["label"].numpy()),
+        )
+
+    def get_train_examples(self, data_dir):
+        """See base class."""
+        return self._create_examples(
+            self._read_tsv(os.path.join(data_dir, "train.tsv")), "train"
+        )
+
+    def get_dev_examples(self, data_dir):
+        """See base class."""
+        return self._create_examples(
+            self._read_tsv(os.path.join(data_dir, "dev.tsv")), "dev"
+        )
+
+    def get_test_examples(self, data_dir):
+        """See base class."""
+        return self._create_examples(
+            self._read_tsv(os.path.join(data_dir, "test.tsv")), "test"
+        )
+
+    def get_unlabeled_examples(self, data_dir):
+        """See base class."""
+        return self._create_examples(
+            self._read_tsv(os.path.join(data_dir, "unlabeled.tsv")), "unlabeled"
+        )
+
+    def get_labels(self):
+        """See base class."""
+        return ["contradiction", "entailment", "neutral"]
+
+    @staticmethod
+    def _create_examples(lines, set_type) -> List[InputExample]:
+        """Creates examples for the training, dev and test sets."""
+        examples = []
+        for (i, line) in enumerate(lines):
+            if i == 0:
+                continue
+            guid = "%s-%s" % (set_type, line[0])
+            text_a = line[7]
+            text_b = line[8]
+            label = line[-1]
+            examples.append(
+                InputExample(
+                    guid=guid, text_a=text_a, text_b=text_b, label=label, idx=i
+                )
+            )
+        return examples
+
+
+class QqpProcessor(DataProcessor):
+    """Processor for the QQP data set (GLUE version)."""
+
+    def get_example_from_tensor_dict(self, tensor_dict):
+        """See base class."""
+        return InputExample(
+            tensor_dict["idx"].numpy(),
+            tensor_dict["question1"].numpy().decode("utf-8"),
+            tensor_dict["question2"].numpy().decode("utf-8"),
+            str(tensor_dict["label"].numpy()),
+        )
+
+    def get_train_examples(self, data_dir):
+        """See base class."""
+        return self._create_examples(
+            self._read_tsv(os.path.join(data_dir, "train.tsv")), "train"
+        )
+
+    def get_dev_examples(self, data_dir):
+        """See base class."""
+        return self._create_examples(
+            self._read_tsv(os.path.join(data_dir, "dev.tsv")), "dev"
+        )
+
+    def get_test_examples(self, data_dir):
+        """See base class."""
+        return self._create_examples(
+            self._read_tsv(os.path.join(data_dir, "test.tsv")), "test"
+        )
+
+    def get_unlabeled_examples(self, data_dir):
+        """See base class."""
+        return self._create_examples(
+            self._read_tsv(os.path.join(data_dir, "unlabeled.tsv")), "unlabeled"
+        )
+
+    def get_labels(self):
+        """See base class."""
+        return ["0", "1"]
+
+    @staticmethod
+    def _create_examples(lines, set_type) -> List[InputExample]:
+        """Creates examples for the training, dev and test sets."""
+        test_mode = set_type == "test"
+        q1_index = 3
+        q2_index = 4
+        examples = []
+        for (i, line) in enumerate(lines):
+            if i == 0:
+                continue
+            guid = "%s-%s" % (set_type, line[0])
+            try:
+                text_a = line[q1_index]
+                text_b = line[q2_index]
+                label = line[5]
+            except IndexError:
+                continue
+            examples.append(
+                InputExample(
+                    guid=guid, text_a=text_a, text_b=text_b, label=label, idx=i
+                )
             )
         return examples
 
@@ -895,6 +1022,8 @@ PROCESSORS = {
     "ax-g": AxGProcessor,
     "ax-b": AxBProcessor,
     "sst-2": Sst2Processor,
+    "snli": SnliProcessor,
+    "qqp": QqpProcessor,
 }  # type: Dict[str,Callable[[],DataProcessor]]
 
 TASK_HELPERS = {
@@ -908,6 +1037,7 @@ METRICS = {
     "cb": ["acc", "f1-macro"],
     "multirc": ["acc", "f1", "em"],
     "record": ["acc", "f1-macro"],
+    "qqp": ["acc", "f1"],
 }
 
 DEFAULT_METRICS = ["acc"]

@@ -1,6 +1,5 @@
 import numpy as np
 
-
 task_name = input()
 final_result_test = np.zeros(5)
 for i, seed in enumerate([13, 21, 42, 87, 100]):

@@ -1,4 +1,4 @@
-for seed in 13 21 42 87 100
+for seed in 42 87 100
 do
 sbatch -p rtx2080 --job-name exp-pet-QQP  --output=slurm/%j-$seed.out -N 1 -n 1 --cpus-per-task=8 --mem=15G --gres=gpu:1  <<EOF
 #!/bin/sh
